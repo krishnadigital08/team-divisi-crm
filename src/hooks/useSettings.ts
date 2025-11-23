@@ -5,11 +5,17 @@ import { toast } from '@/hooks/use-toast';
 import type { SystemSetting, CompanySetting, UserPreference, NotificationSetting } from '@/types/settings';
 
 export const useSystemSettings = () => {
+  const { user } = useAuth();
   const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchSettings = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('system_settings')
@@ -33,11 +39,11 @@ export const useSystemSettings = () => {
         .eq('key', key);
 
       if (error) throw error;
-      
-      setSettings(prev => prev.map(setting => 
+
+      setSettings(prev => prev.map(setting =>
         setting.key === key ? { ...setting, value } : setting
       ));
-      
+
       toast({
         title: "Success",
         description: "Setting updated successfully",
@@ -55,25 +61,31 @@ export const useSystemSettings = () => {
 
   useEffect(() => {
     fetchSettings();
-  }, []);
+  }, [user]);
 
   return { settings, loading, error, updateSetting, refetch: fetchSettings };
 };
 
 export const useCompanySettings = () => {
+  const { user } = useAuth();
   const [settings, setSettings] = useState<CompanySetting | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchSettings = async () => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('company_settings')
         .select('*')
         .limit(1)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error) throw error;
       setSettings(data || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch company settings');
@@ -85,16 +97,15 @@ export const useCompanySettings = () => {
   const updateSettings = async (data: Partial<CompanySetting>) => {
     try {
       let result;
-      
+
       if (settings) {
         result = await supabase
           .from('company_settings')
           .update(data)
           .eq('id', settings.id)
           .select()
-          .single();
+          .maybeSingle();
       } else {
-        // Ensure company_name is provided for new records
         const insertData = {
           company_name: 'Your Company Name',
           ...data
@@ -103,11 +114,11 @@ export const useCompanySettings = () => {
           .from('company_settings')
           .insert(insertData)
           .select()
-          .single();
+          .maybeSingle();
       }
 
       if (result.error) throw result.error;
-      
+
       setSettings(result.data);
       toast({
         title: "Success",
@@ -126,7 +137,7 @@ export const useCompanySettings = () => {
 
   useEffect(() => {
     fetchSettings();
-  }, []);
+  }, [user]);
 
   return { settings, loading, error, updateSettings, refetch: fetchSettings };
 };
