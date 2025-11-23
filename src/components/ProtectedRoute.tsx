@@ -26,7 +26,7 @@ export function ProtectedRoute({
     return <Navigate to="/auth" replace />;
   }
 
-  if (requiredRole && (!profile?.role || profile.role !== requiredRole)) {
+  if (requiredRole) {
     const roleHierarchy: Record<UserRole, number> = {
       marketing: 1,
       supervisor: 2,

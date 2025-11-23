@@ -62,9 +62,9 @@ const App = () => (
                     <Followups />
                   </ProtectedRoute>
                 } />
-                <Route path="/followups" element={
-                  <ProtectedRoute>
-                    <Followups />
+                <Route path="/divisions" element={
+                  <ProtectedRoute requiredRole="manager">
+                    <Divisions />
                   </ProtectedRoute>
                 } />
                 <Route path="/users" element={
