@@ -20,7 +20,7 @@ export const useSystemSettings = () => {
       const { data, error } = await supabase
         .from('system_settings')
         .select('*')
-        .order('category', { ascending: true });
+        .order('key', { ascending: true });
 
       if (error) throw error;
       setSettings(data || []);

@@ -37,8 +37,7 @@ export function useUsers() {
           email,
           division_id,
           created_at,
-          divisions(name),
-          user_roles(role)
+          divisions(name)
         `)
         .order('created_at', { ascending: false });
 
@@ -52,13 +51,26 @@ export function useUsers() {
         return;
       }
 
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select('user_id, role');
+
+      if (rolesError) {
+        console.error('Error fetching roles:', rolesError);
+      }
+
+      const rolesMap = new Map<string, UserRole>();
+      (rolesData || []).forEach((role: any) => {
+        rolesMap.set(role.user_id, role.role);
+      });
+
       const formattedUsers: User[] = (profilesData || []).map((profile: any) => ({
         id: profile.user_id,
         display_name: profile.display_name,
         email: profile.email,
         division_id: profile.division_id,
         division_name: profile.divisions?.name,
-        role: profile.user_roles?.[0]?.role,
+        role: rolesMap.get(profile.user_id),
         created_at: new Date(profile.created_at),
       }));
 
